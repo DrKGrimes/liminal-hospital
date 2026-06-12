@@ -256,6 +256,77 @@ function updateNarrative() {
   }
 }
 
+// ---------------------------------------------------------------- photo mode
+function ordinal(n) {
+  if (n % 100 >= 11 && n % 100 <= 13) return 'th';
+  return ['th', 'st', 'nd', 'rd'][n % 10] || 'th';
+}
+function photoCaption() {
+  const d = new Date();
+  let h = d.getHours();
+  const ampm = h >= 12 ? 'pm' : 'am';
+  h = h % 12 || 12;
+  const hh = String(h).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  return `St Curwen's   ${hh}:${mm} ${ampm}   ${days[d.getDay()]} ${d.getDate()}${ordinal(d.getDate())} ${months[d.getMonth()]}, ${d.getFullYear()}`;
+}
+function takePhoto(save = true) {
+  renderer.render(scene, camera);   // fresh frame so the buffer is readable
+  const src = renderer.domElement;
+  const w = src.width, hgt = src.height;
+  if (!w || !hgt) return null;      // window currently has no size
+  const side = Math.round(w * 0.045), top = side, bottom = Math.round(w * 0.10);
+  const cv = document.createElement('canvas');
+  cv.width = w + side * 2; cv.height = hgt + top + bottom;
+  const ctx = cv.getContext('2d');
+  // aged mount
+  ctx.fillStyle = '#ece4d0';
+  ctx.fillRect(0, 0, cv.width, cv.height);
+  for (let i = 0; i < 160; i++) {
+    ctx.fillStyle = `rgba(150,120,80,${0.02 + (i % 5) * 0.008})`;
+    ctx.fillRect((i * 67) % cv.width, (i * 113) % cv.height, 2, 2);
+  }
+  // the photograph, sepia-leaning
+  if ('filter' in ctx) ctx.filter = 'sepia(0.38) saturate(0.88) contrast(0.96) brightness(1.02)';
+  ctx.drawImage(src, side, top, w, hgt);
+  ctx.filter = 'none';
+  // warm wash + vignette
+  ctx.fillStyle = 'rgba(185,135,65,0.09)';
+  ctx.fillRect(side, top, w, hgt);
+  const vg = ctx.createRadialGradient(side + w / 2, top + hgt / 2, Math.min(w, hgt) * 0.4, side + w / 2, top + hgt / 2, Math.max(w, hgt) * 0.72);
+  vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(60,40,20,0.28)');
+  ctx.fillStyle = vg;
+  ctx.fillRect(side, top, w, hgt);
+  // a hairline around the print
+  ctx.strokeStyle = 'rgba(110,90,60,0.45)';
+  ctx.lineWidth = Math.max(1, w / 800);
+  ctx.strokeRect(side - 0.5, top - 0.5, w + 1, hgt + 1);
+  // caption
+  ctx.fillStyle = '#5a4a36';
+  ctx.font = `italic ${Math.round(w * 0.022)}px Georgia, 'Times New Roman', serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(photoCaption(), cv.width / 2, hgt + top + bottom * 0.52);
+  if (save) {
+    cv.toBlob(b => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(b);
+      const d = new Date();
+      a.download = `st-curwens-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}-${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}${String(d.getSeconds()).padStart(2, '0')}.jpg`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    }, 'image/jpeg', 0.92);
+    audio.shutter();
+    const fl = document.getElementById('photoflash');
+    fl.classList.remove('snap'); void fl.offsetWidth; fl.classList.add('snap');
+  }
+  return cv;
+}
+window.addEventListener('keydown', e => {
+  if (e.code === 'KeyP' && started) takePhoto();
+});
+
 // ---------------------------------------------------------------- start flow
 let started = false;
 const overlay = document.getElementById('overlay');
@@ -354,4 +425,5 @@ window.__game = {
   look(yaw, pitch = 0) { player.yaw = yaw; player.pitch = pitch; },
   press(code, down = true) { player.keys[code] = down; },
   fig,
+  photo: takePhoto,
 };

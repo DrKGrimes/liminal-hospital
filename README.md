@@ -25,6 +25,7 @@ python3 -m http.server 8741
 | Mouse (or arrow keys) | look |
 | Shift | hurry |
 | E | take an item |
+| P | take a photograph (saves a captioned sepia print) |
 | Esc | pause |
 
 ### URL options

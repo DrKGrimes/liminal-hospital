@@ -64,6 +64,10 @@
   #fader { position:fixed; inset:0; z-index:15; background:#eef1f2; pointer-events:none;
     opacity:1; transition:opacity 2.5s ease; }
   #fader.clear { opacity:0; }
+
+  #photoflash { position:fixed; inset:0; z-index:14; background:#fff; pointer-events:none; opacity:0; }
+  #photoflash.snap { animation: snapflash 0.45s ease-out; }
+  @keyframes snapflash { 0% { opacity:0.85; } 100% { opacity:0; } }
 </style>
 </head>
 <body>
@@ -75,13 +79,14 @@
 <div id="inv"><span id="relics"></span></div>
 <div id="zone"></div>
 <div id="fader"></div>
+<div id="photoflash"></div>
 <div id="overlay">
   <h1>Liminal Hospital</h1>
   <div class="sub">a walking simulator</div>
   <div class="start">click to enter</div>
   <div class="keys">
     WASD — walk &nbsp;·&nbsp; mouse — look &nbsp;·&nbsp; shift — hurry &nbsp;·&nbsp; E — take<br>
-    esc — pause
+    P — photograph &nbsp;·&nbsp; esc — pause
   </div>
   <div class="seed" id="seedlabel"></div>
 </div>

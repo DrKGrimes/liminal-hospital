@@ -326,6 +326,27 @@ export class AudioEngine {
     this.proxGain.gain.setTargetAtTime(closeness * 0.035, this.ctx.currentTime, 0.4);
   }
 
+  shutter() {
+    if (!this.ctx) return;
+    const c = this.ctx, t = c.currentTime;
+    // mechanical click-clack
+    [[0, 3200, 0.07], [0.06, 2200, 0.05]].forEach(([off, fq, vol]) => {
+      const n = this._noise();
+      const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = fq;
+      const g = c.createGain();
+      g.gain.setValueAtTime(vol, t + off);
+      g.gain.exponentialRampToValueAtTime(0.001, t + off + 0.03);
+      n.connect(hp); hp.connect(g); g.connect(this.master);
+      n.start(t + off); n.stop(t + off + 0.05);
+    });
+    const o = c.createOscillator(); o.frequency.value = 170;
+    const og = c.createGain();
+    og.gain.setValueAtTime(0.04, t + 0.06);
+    og.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    o.connect(og); og.connect(this.master);
+    o.start(t + 0.06); o.stop(t + 0.14);
+  }
+
   figurePass() {
     if (!this.ctx) return;
     const c = this.ctx, t = c.currentTime;
